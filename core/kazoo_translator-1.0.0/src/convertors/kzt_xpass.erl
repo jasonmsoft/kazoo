@@ -18,39 +18,38 @@
 
 -spec parse_cmds(iolist()) -> {'ok', xml_els()} |
                               {'error', 'not_parsed'}.
-parse_cmds(XMLString) ->
-    try xmerl_scan:string(wh_util:to_list(XMLString)) of
-        {#xmlElement{name='Response'}=XML, _} -> {'ok', XML};
-        _ -> {'error', 'not_parsed'}
+parse_cmds(XpassString) ->
+    try wh_json:decode(XpassString)of
+        JObj -> {'ok', JObj}
     catch
         _:_ -> {'error', 'not_parsed'}
     end.
 
--spec exec(whapps_call:call(), xml_el() | text()) ->
+
+-spec exec(whapps_call:call(), wh_json:object()) ->
                   {'error', whapps_call:call()} |
                   {'request', whapps_call:call()} |
                   {'stop', whapps_call:call()}.
-exec(Call, #xmlElement{name='Response', content=Els}) ->
-    exec_elements(Call, Els);
+
+
 exec(Call, Resp) ->
-    try xmerl_scan:string(Resp) of
-        {#xmlElement{name='Response', content=Els}, _} ->
-            exec_elements(Call, Els);
+    case  Resp of
+        ?KZT_XPASS_CMDS(Cmds) ->
+            exec_elements(Call, Cmds);
         _Other ->
-            lager:debug("failed to scan XML: ~p", [_Other]),
-            {'error', Call}
-    catch
-        _E:_R ->
-            lager:debug("xml extraction fail: ~s: ~p: ~p", [_E, _R, Resp]),
+            lager:debug("failed to scan JObjs: ~p", [_Other]),
             {'error', Call}
     end.
 
--spec exec_elements(whapps_call:call(), xml_els()) ->
+
+
+
+-spec exec_elements(whapps_call:call(), wh_json:object()) ->
                            {'error', whapps_call:call()} |
                            {'request', whapps_call:call()} |
                            {'stop', whapps_call:call()}.
 exec_elements(Call, []) -> {'ok', Call};
-exec_elements(Call, [#xmlText{}=_El|Els]) ->
+exec_elements(Call, [_El|Els]) ->
     exec_elements(Call, Els);
 exec_elements(Call, [El|Els]) ->
     try exec_element(Call, El) of
@@ -73,11 +72,9 @@ exec_elements(Call, [El|Els]) ->
                           {'request', whapps_call:call()} |
                           {'stop', whapps_call:call()} |
                           {'error', whapps_call:call()}.
-exec_element(Call, #xmlElement{name='Dial'
-                               ,content=Endpoints
-                               ,attributes=Attrs
-                              }) ->
-    kzt_twiml_dial:exec(Call, Endpoints, Attrs);
+exec_element(Call, ?KZT_XPASS_CMD(<<"transfer">>, Args)) ->
+    kzt_xpass_dial:exec(Call, <<"transfer">>, Args);
+
 exec_element(Call, #xmlElement{name='Record'
                                ,content=[] % nothing inside the tags please
                                ,attributes=Attrs

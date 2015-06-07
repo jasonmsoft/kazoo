@@ -40,4 +40,10 @@
 -define(DEFAULT_TTS_VOICE, whapps_config:get_binary(?TTS_CONFIG_CAT, <<"tts_voice">>, <<"male">>)).
 
 -define(KZT_HRL, 'true').
+
+
+-define(KZT_XPASS_FLAG, <<"xpass">>).
+-define(KZT_XPASS_CMDS(Cmds), {[?KZT_XPASS_FLAG, Cmds]}).
+-define(KZT_XPASS_CMD(Cmd, Args), {[Cmd, Args]}).
+
 -endif.

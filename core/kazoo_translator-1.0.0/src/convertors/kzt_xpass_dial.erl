@@ -115,13 +115,13 @@ exec(Call, [#xmlElement{name='Queue'
     lager:info("dialing into queue ~s, unsupported", [QueueId]),
     {'stop', Call1};
 
-exec(Call, [#xmlElement{}|_]=Endpoints, Attrs) ->
-    lager:debug("dialing endpoints"),
+exec(Call, <<"transfer">>, Args) ->
+    lager:debug("dialing endpoints, arg:~p", [Args]),
 
-    Props = kz_xml:attributes_to_proplist(Attrs),
+    {Props} = Args,
     Call1 = setup_call_for_dial(Call, Props),
 
-    case xml_elements_to_endpoints(Call1, Endpoints) of
+    case xpass_elements_to_endpoints(Call1, Props) of
         [] ->
             lager:info("no endpoints were found to dial"),
             {'stop', Call1};
@@ -216,26 +216,27 @@ is_numeric_or_plus(_) -> 'false'.
 %% capture the failed B-leg and continue processing the TwiML (if any).
 force_outbound(Props) -> props:get_is_true('continueOnFail', Props, 'true').
 
--spec xml_elements_to_endpoints(whapps_call:call(), xml_els()) ->
+-spec xpass_elements_to_endpoints(whapps_call:call(), props()) ->
                                        wh_json:objects().
--spec xml_elements_to_endpoints(whapps_call:call(), xml_els(), wh_json:objects()) ->
+-spec xpass_elements_to_endpoints(whapps_call:call(), props(), wh_json:objects()) ->
                                        wh_json:objects().
-xml_elements_to_endpoints(Call, EPs) ->
-    xml_elements_to_endpoints(Call, EPs, []).
+xpass_elements_to_endpoints(Call, Props) when not is_list(Props)->
+    xpass_elements_to_endpoints(Call, [Props], []);
 
-xml_elements_to_endpoints(_, [], Acc) -> Acc;
-xml_elements_to_endpoints(Call, [#xmlElement{name='Device'
-                                             ,content=DeviceIdTxt
-                                             ,attributes=_DeviceAttrs
-                                            }
-                                 | EPs], Acc
-                         ) ->
-    DeviceId = kz_xml:texts_to_binary(DeviceIdTxt),
-    lager:debug("maybe adding device ~s to ring group", [DeviceId]),
-    case cf_endpoint:build(DeviceId, Call) of
-        {'ok', DeviceEPs} -> xml_elements_to_endpoints(Call, EPs, DeviceEPs ++ Acc);
-        {'error', _E} ->
-            lager:debug("failed to add device ~s: ~p", [DeviceId, _E]),
+xpass_elements_to_endpoints(Call, Props) when is_list(Props)->
+    xpass_elements_to_endpoints(Call, Props, []).
+
+
+xpass_elements_to_endpoints(_, [], Acc) -> Acc;
+xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
+    Target = proplists:get_value(<<"to">>, Ep),
+    lager:debug("maybe adding sip device ~s ", [Target]),
+    try wnm_sip:parse(Target) of
+        URI ->
+            xpass_elements_to_endpoints(Call, EPs, [sip_uri(Call, URI)|Acc])
+    catch
+        'throw':_E ->
+            lager:debug("failed to parse SIP uri: ~p", [_E]),
             xml_elements_to_endpoints(Call, EPs, Acc)
     end;
 xml_elements_to_endpoints(Call, [#xmlElement{name='User'
@@ -326,7 +327,7 @@ get_max_participants(N) when is_integer(N), N =< 40, N > 0 -> N.
 
 -spec dial_timeout(wh_proplist() | pos_integer()) -> pos_integer().
 dial_timeout(Props) when is_list(Props) ->
-    dial_timeout(props:get_integer_value('timeout', Props, 20));
+    dial_timeout(props:get_integer_value('timeout', Props, 60));
 dial_timeout(T) when is_integer(T), T > 0 -> T.
 
 dial_strategy(Props) ->
