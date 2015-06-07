@@ -51,6 +51,8 @@
          ,set_caller_controls/2, get_caller_controls/1
          ,set_advertise/2, get_advertise/1
          ,set_chat_permissions/2, get_chat_permissions/1
+         ,get_session_id/0
+	 ,get_current_timestamp/0
         ]).
 
 -include("kzt.hrl").
@@ -310,3 +312,16 @@ get_request_vars(Call) ->
          ,{<<"QueueSid">>, get_queue_sid(Call)}
          ,{<<"CallStatus">>, get_call_status(Call)}
         ])).
+
+
+-spec get_session_id()-> binary().
+get_session_id()->
+   wh_util:rand_hex_binary(16).
+
+-spec get_current_timestamp() -> binary().
+get_current_timestamp()->
+    {_, _, Ms} = os:timestamp(),
+    Ms2 = integer_to_list(Ms),
+    Ms3 = list_to_binary(Ms2),
+    <<Ms4:3/binary, _/binary>> = Ms3,
+    <<(wh_util:format_date())/binary, "/", (wh_util:format_time())/binary, ".", Ms4/binary>>.

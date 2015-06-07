@@ -141,26 +141,24 @@ exec_element(Call, _Xml) ->
 -spec req_params(whapps_call:call()) -> wh_proplist().
 req_params(Call) ->
     props:filter_undefined(
-      [{<<"CallSid">>, whapps_call:call_id(Call)}
-       ,{<<"AccountSid">>, whapps_call:account_id(Call)}
-       ,{<<"From">>, whapps_call:from_user(Call)}
-       ,{<<"FromRealm">>, whapps_call:from_realm(Call)}
-       ,{<<"To">>, whapps_call:to_user(Call)}
-       ,{<<"ToRealm">>, whapps_call:to_realm(Call)}
-       ,{<<"CallStatus">>, kzt_util:get_call_status(Call)}
-       ,{<<"ApiVersion">>, <<"2010-04-01">>}
-       ,{<<"Direction">>, <<"inbound">>}
-       ,{<<"CallerName">>, whapps_call:caller_id_name(Call)}
-       ,{<<"CallerNumber">>, whapps_call:caller_id_number(Call)}
-       ,{<<"RecordingUrl">>, kzt_util:get_recording_url(Call)}
-       ,{<<"RecordingDuration">>, kzt_util:get_recording_duration(Call)}
-       ,{<<"RecordingSid">>, kzt_util:get_recording_sid(Call)}
-       ,{<<"Digits">>, kzt_util:get_digit_pressed(Call)}
-       ,{<<"TranscriptionSid">>, kzt_util:get_transcription_sid(Call)}
-       ,{<<"TranscriptionText">>, kzt_util:get_transcription_text(Call)}
-       ,{<<"TranscriptionStatus">>, kzt_util:get_transcription_status(Call)}
-       ,{<<"TranscriptionUrl">>, kzt_util:get_transcription_url(Call)}
-      ]).
+        [
+        {<<"session">>,
+        {[{<<"id">>, kzt_util:get_session_id()}
+        ,{<<"timestamp">>, kzt_util:get_current_timestamp()}
+        ,{<<"initialText">>, <<"null">>}
+        ,{<<"callId">>, whapps_call:call_id(Call)}
+        ,{<<"To">>, {[{<<"id">>,<<(whapps_call:to_user(Call))/binary, "@", (whapps_call:to_realm(Call))/binary>>},
+                    {<<"name">>, whapps_call:to_user(Call)},
+                    {<<"channel">>, <<"VOICE">>},
+                    {<<"network">>, <<"VOIP">>}
+                    ]}}
+        ,{<<"from">>, {[{<<"id">>, <<(whapps_call:from_user(Call))/binary, "@", (whapps_call:from_realm(Call))>>},
+                        {<<"name">>, whapps_call:from_user(Call)},
+                        {<<"channel">>, <<"VOICE">>},
+                        {<<"network">>, <<"VOIP">>}
+        ]}}
+        ]}}
+        ]).
 
 %%------------------------------------------------------------------------------
 %% Verbs
