@@ -77,13 +77,18 @@ exec_element(Call, ?KZT_XPASS_CMD(<<"transfer">>, Args)) ->
 
 
 exec_element(Call, ?KZT_XPASS_CMD(<<"say">>, Args)) ->
-    kzt_xpass_dial:exec(Call, <<"say">>, Args),
-    case kzt_xpass_say:exec(Call, ToSay, Attrs) of
+    case kzt_xpass_say:exec(Call, <<"say">>, Args) of
         {'ok', _}=OK -> OK;
         {'error', _E, Call1} ->
             lager:debug("say stopped with error ~p", [_E]),
             {'error', Call1}
     end;
+
+
+exec_element(Call,?KZT_XPASS_CMD(<<"ask">>, Args)) ->
+    SubActions = kzt_xpass_util:get_ask_subactions(Args),
+    gather(Call, SubActions, Args);
+
 
 exec_element(Call, #xmlElement{name='Record'
                                ,content=[] % nothing inside the tags please
@@ -288,21 +293,23 @@ gather(Call, [], Attrs) -> gather(Call, Attrs);
 gather(Call, SubActions, Attrs) ->
     lager:info("GATHER: exec sub actions"),
     {'ok', C} = exec_gather_els(kzt_util:clear_digits_collected(Call)
-                                ,kz_xml:elements(SubActions)
+                                ,SubActions
                                ),
     gather(C, Attrs).
 
--spec gather(whapps_call:call(), xml_attribs()) ->
+-spec gather(whapps_call:call(), wh_json:object()) ->
                     kzt_receiver:collect_dtmfs_return().
 gather(Call, Attrs) ->
     whapps_call_command:answer(Call),
 
-    Props = kz_xml:attributes_to_proplist(Attrs),
+    JObj = [Attrs],
+    Timeout = wh_json:get_value(<<"timeout">>, JObj, 5) * 1000,
+    FinishKey = <<"#">>,
+    NumDigitsObj = wh_json:get_value(<<"choice">>, JObj),
+    NumDigits = wh_json:get_value(<<"value">>, NumDigitsObj),
+    NumDigits2 = list_to_integer(binary_to_list(NumDigits)),
 
-    Timeout = kzt_twiml_util:timeout_s(Props, 5) * 1000,
-    FinishKey = kzt_twiml_util:finish_dtmf(Props),
-
-    gather(Call, FinishKey, Timeout, Props, kzt_twiml_util:num_digits(Props)).
+    gather(Call, FinishKey, Timeout, JObj, NumDigits2).
 
 -spec gather(whapps_call:call(), api_binary(), wh_timeout(), wh_proplist(), pos_integer()) ->
                     {'ok', whapps_call:call()} |
