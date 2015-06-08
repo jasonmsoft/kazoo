@@ -27,8 +27,7 @@ parse_cmds(XpassString) ->
     end.
 
 
-result_param(Call) ->
-    noop.
+
 
 
 -spec exec(whapps_call:call(), wh_json:object()) ->
@@ -179,6 +178,13 @@ req_params(Call) ->
         ]}}
         ]}}
         ]).
+
+result_param(Call) ->
+    noop.
+
+
+
+
 
 %%------------------------------------------------------------------------------
 %% Verbs
