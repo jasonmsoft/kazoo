@@ -183,6 +183,7 @@ req_params(Call) ->
         ]}}
         ]).
 
+-spec result_param(whapps_call:call()) ->wh_proplist().
 result_param(Call) ->
     Digits = kzt_util:get_digits_collected(Call),
     props:filter_undefined(
@@ -194,7 +195,7 @@ result_param(Call) ->
                 {<<"state">>, kzt_util:get_call_status(Call)},
                 {<<"sessionDuration">>, kzt_util:get_dial_call_duration(Call)},
                 {<<"calledid">>, whapps_call:to(Call)},
-                {<<"actions">>, [wh_json:from_list([{<<"name">>, Digits}])]}
+                {<<"actions">>, [wh_json:from_list([{<<"name">>, kzt_util:get_ask_name(Call)}, {<<"value">>, Digits}])]}
             ])
             }
         ])
@@ -377,9 +378,11 @@ gather_finished(Call, Props) ->
             CurrentUri = kzt_util:get_voice_uri(Call),
             NewUri = kzt_util:resolve_uri(CurrentUri, kzt_twiml_util:action_url(Props)),
             Method = kzt_util:http_method(Props),
+            Askname = wh_json:get_value(<<"name">>, Props),
 
             Setters = [{fun kzt_util:set_voice_uri_method/2, Method}
                        ,{fun kzt_util:set_voice_uri/2, NewUri}
+                       ,{fun kzt_util:set_ask_name/2, Askname}
                       ],
             {'request', whapps_call:exec(Setters, Call)}
     end.
