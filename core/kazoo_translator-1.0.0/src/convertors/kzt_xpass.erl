@@ -93,6 +93,10 @@ exec_element(Call,?KZT_XPASS_CMD(<<"ask">>, Args)) ->
     SubActions = kzt_xpass_util:get_ask_subactions(Args),
     gather(Call, SubActions, Args);
 
+exec_element(Call,?KZT_XPASS_CMD(<<"hangup">>, Args)) ->
+    hangup(Call);
+
+
 
 exec_element(Call, #xmlElement{name='Record'
                                ,content=[] % nothing inside the tags please
