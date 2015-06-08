@@ -64,6 +64,8 @@
 -export([set_language/2, language/1]).
 -export([set_to_tag/2, to_tag/1]).
 -export([set_from_tag/2, from_tag/1]).
+-export([set_session_id/2]).
+
 
 -export([set_dtmf_collection/2, set_dtmf_collection/3
          ,get_dtmf_collection/1, get_dtmf_collection/2
@@ -610,6 +612,11 @@ set_request(Request, #whapps_call{}=Call) when is_binary(Request) ->
                      ,request_user=wnm_util:to_e164(RequestUser)
                      ,request_realm=RequestRealm
                     }.
+
+-spec set_request(ne_binary(), call()) -> call().
+set_session_id(SessionId, Call) ->
+    kvs_store(<<"session_id">>, SessionId, Call).
+
 
 -spec request(call()) -> ne_binary().
 request(#whapps_call{request=Request}) ->

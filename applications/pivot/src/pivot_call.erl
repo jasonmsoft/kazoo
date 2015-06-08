@@ -144,17 +144,18 @@ init([Call, JObj]) ->
 
     ReqFormat = wh_json:get_value(<<"Request-Format">>, JObj, <<"twiml">>),
     BaseParams = wh_json:from_list(req_params(ReqFormat, Call)),
-
+    Session = props:get_value(<<"session">>, BaseParams),
+    SessionId = wh_json:get_value(<<"id">>, Session),
     lager:debug("starting pivot req to ~s to ~s", [Method, VoiceUri]),
-
+    Call1 = whapps_call:set_session_id(SessionId),
     ?MODULE:new_request(self(), VoiceUri, Method, BaseParams),
 
     {'ok'
      ,#state{cdr_uri=wh_json:get_value(<<"CDR-URI">>, JObj)
-             ,call=whapps_call:kvs_update_counter('pivot_counter', 1, Call)
+             ,call=whapps_call:kvs_update_counter('pivot_counter', 1, Call1)
              ,request_format=ReqFormat
              ,debug=wh_json:is_true(<<"Debug">>, JObj, 'false')
-             ,requester_queue = whapps_call:controller_queue(Call)
+             ,requester_queue = whapps_call:controller_queue(Call1)
             }
      ,'hibernate'
     }.
@@ -488,6 +489,7 @@ handle_resp(Call, CT, RespBody) ->
             ?MODULE:new_request(Srv
                                 ,kzt_util:get_voice_uri(Call1)
                                 ,kzt_util:get_voice_uri_method(Call1)
+                                ,kzt_xpass:result_param(Call1)
                                )
     end.
 

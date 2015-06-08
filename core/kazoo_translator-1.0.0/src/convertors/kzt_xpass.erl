@@ -184,7 +184,8 @@ req_params(Call) ->
         ]).
 
 result_param(Call) ->
-    noop.
+    Digits = kzt_util:get_digits_collected(Call),
+    .
 
 
 
