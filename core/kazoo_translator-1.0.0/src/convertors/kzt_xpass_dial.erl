@@ -355,7 +355,7 @@ hangup_dtmf(DTMF) ->
         'false' -> 'undefined'
     end.
 
-should_record_call(Props) -> wh_util:is_true(props:get_value('record', Props, 'false')).
+should_record_call(Props) -> wh_util:is_true(props:get_value(<<"record_call">>, Props, 'false')).
 timelimit_s(Props) -> props:get_integer_value('timeLimit', Props, 14400).
 
 
