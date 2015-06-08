@@ -97,6 +97,9 @@ exec_element(Call,?KZT_XPASS_CMD(<<"hangup">>, Args)) ->
     hangup(Call);
 
 
+exec_element(Call,?KZT_XPASS_CMD(<<"on">>, Args)) ->
+    exec_on(Call, Args);
+
 
 exec_element(Call, #xmlElement{name='Record'
                                ,content=[] % nothing inside the tags please
@@ -214,7 +217,21 @@ result_param(Call) ->
 hangup(Call) ->
     whapps_call_command:answer(Call),
     whapps_call_command:hangup(Call),
-    {'stop', kzt_util:update_call_status(?STATUS_COMPLETED, Call)}.
+    {'request', kzt_util:update_call_status(?STATUS_COMPLETED, Call)}.
+
+
+
+exec_on(Call, Args) ->
+    Event = wh_json:get_value(<<"event">>, Args),
+    Next = wh_json:get_value(<<"next">>, Args),
+    Uri = case Next of
+        <<"http://", _>> ->
+           Next;
+        _Other ->
+           kzt_util:resolve_uri(kzt_util:get_voice_uri(Call), Next)
+    end,
+    {ok, kzt_util:set_voice_uri(Uri, Call)}.
+
 
 -spec reject(whapps_call:call(), xml_attribs()) ->
                     {'stop', whapps_call:call()}.
