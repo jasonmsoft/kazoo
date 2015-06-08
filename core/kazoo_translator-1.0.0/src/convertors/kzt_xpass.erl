@@ -75,6 +75,16 @@ exec_elements(Call, [El|Els]) ->
 exec_element(Call, ?KZT_XPASS_CMD(<<"transfer">>, Args)) ->
     kzt_xpass_dial:exec(Call, <<"transfer">>, Args);
 
+
+exec_element(Call, ?KZT_XPASS_CMD(<<"say">>, Args)) ->
+    kzt_xpass_dial:exec(Call, <<"say">>, Args),
+    case kzt_xpass_say:exec(Call, ToSay, Attrs) of
+        {'ok', _}=OK -> OK;
+        {'error', _E, Call1} ->
+            lager:debug("say stopped with error ~p", [_E]),
+            {'error', Call1}
+    end;
+
 exec_element(Call, #xmlElement{name='Record'
                                ,content=[] % nothing inside the tags please
                                ,attributes=Attrs
@@ -99,7 +109,7 @@ exec_element(Call, #xmlElement{name='Say'
                                ,content=ToSay
                                ,attributes=Attrs
                               }) ->
-    case kzt_twiml_say:exec(Call, ToSay, Attrs) of
+    case kzt_xpass_say:exec(Call, ToSay, Attrs) of
         {'ok', _}=OK -> OK;
         {'error', _E, Call1} ->
             lager:debug("say stopped with error ~p", [_E]),
