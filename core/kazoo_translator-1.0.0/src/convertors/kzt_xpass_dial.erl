@@ -185,7 +185,7 @@ setup_call_for_dial(Call, Props) ->
 -spec maybe_end_dial(whapps_call:call(), wh_proplist()) ->
                             {'ok' | 'stop' | 'request', whapps_call:call()}.
 maybe_end_dial(Call, Props) ->
-    maybe_end_dial(Call, Props, kzt_twiml_util:action_url(Props)).
+    maybe_end_dial(Call, Props, kzt_xpass_util:action_url(Props)).
 
 maybe_end_dial(Call, _Props, 'undefined') ->
     lager:debug("a-leg status after bridge: ~s", [kzt_util:get_call_status(Call)]),

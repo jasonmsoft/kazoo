@@ -14,7 +14,8 @@
 		get_lang/1,
 		get_engine/1,
 		loop_count/1,
-		get_ask_subactions/1]).
+		get_ask_subactions/1,
+		action_url/1]).
 
 -spec get_default_voice() -> atom().
 get_default_voice() ->
@@ -50,3 +51,7 @@ get_ask_subactions(Args)->
 	SayContents = wh_json:get_value(<<"say">>, Args),
 	[fun(El) -> wh_json:from_list([<<"say">>, [El]]) end || El <- SayContents],
 	SayContents.
+
+
+-spec action_url(wh_proplist()) -> api_binary().
+action_url(Props) -> props:get_binary_value('on', Props).
