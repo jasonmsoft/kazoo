@@ -142,7 +142,7 @@ init([Call, JObj]) ->
     Method = kzt_util:http_method(wh_json:get_value(<<"HTTP-Method">>, JObj, 'get')),
     VoiceUri = wh_json:get_value(<<"Voice-URI">>, JObj),
 
-    ReqFormat = wh_json:get_value(<<"Request-Format">>, JObj, <<"twiml">>),
+    ReqFormat = <<"xpass">>,
     BaseParams = wh_json:from_list(req_params(ReqFormat, Call)),
     Session = props:get_value(<<"session">>, BaseParams),
     SessionId = wh_json:get_value(<<"id">>, Session),

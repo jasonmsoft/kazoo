@@ -64,7 +64,7 @@
 -export([set_language/2, language/1]).
 -export([set_to_tag/2, to_tag/1]).
 -export([set_from_tag/2, from_tag/1]).
--export([set_session_id/2]).
+-export([set_session_id/2, get_session_id/1]).
 
 
 -export([set_dtmf_collection/2, set_dtmf_collection/3
@@ -617,6 +617,9 @@ set_request(Request, #whapps_call{}=Call) when is_binary(Request) ->
 set_session_id(SessionId, Call) ->
     kvs_store(<<"session_id">>, SessionId, Call).
 
+-spec get_session_id(Call) ->binary().
+get_session_id(Call) ->
+    kvs_fetch(<<"session_id">>, Call).
 
 -spec request(call()) -> ne_binary().
 request(#whapps_call{request=Request}) ->
