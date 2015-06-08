@@ -237,7 +237,7 @@ xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
     catch
         'throw':_E ->
             lager:debug("failed to parse SIP uri: ~p", [_E]),
-            xml_elements_to_endpoints(Call, EPs, Acc)
+            xpass_elements_to_endpoints(Call, EPs, Acc)
     end;
 xml_elements_to_endpoints(Call, [#xmlElement{name='User'
                                             ,content=UserIdTxt
