@@ -14,6 +14,7 @@
          ,parse_cmds/1
          ,req_params/1
          ,exec_gather_els/3
+         ,result_param/1
         ]).
 
 -spec parse_cmds(iolist()) -> {'ok', xml_els()} |
@@ -24,6 +25,10 @@ parse_cmds(XpassString) ->
     catch
         _:_ -> {'error', 'not_parsed'}
     end.
+
+
+result_param(Call) ->
+    noop.
 
 
 -spec exec(whapps_call:call(), wh_json:object()) ->
