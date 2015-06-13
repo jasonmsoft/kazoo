@@ -144,10 +144,11 @@ init([Call, JObj]) ->
 
     ReqFormat = <<"xpass">>,
     BaseParams = wh_json:from_list(req_params(ReqFormat, Call)),
-    Session = props:get_value(<<"session">>, BaseParams),
+    lager:debug("+++pivot call baseparams:~p", [BaseParams]),
+    Session = wh_json:get_value(<<"session">>, BaseParams),
     SessionId = wh_json:get_value(<<"id">>, Session),
     lager:debug("starting pivot req to ~s to ~s", [Method, VoiceUri]),
-    Call1 = whapps_call:set_session_id(SessionId),
+    Call1 = whapps_call:set_session_id(SessionId, Call),
     ?MODULE:new_request(self(), VoiceUri, Method, BaseParams),
 
     {'ok'
@@ -444,8 +445,8 @@ send_req(Call, Uri, 'post', BaseParams, Debug) ->
     UserParams = kzt_translator:get_user_vars(Call),
     Params = wh_json:set_values(BaseParams, UserParams),
     UpdatedCall = whapps_call:kvs_erase(<<"digits_collected">>, Call),
-    Headers = [{"Content-Type", "application/x-www-form-urlencoded"}],
-    send(UpdatedCall, Uri, 'post', Headers, wh_json:to_querystring(Params), Debug).
+    Headers = [{"Content-Type", "text/json"}],
+    send(UpdatedCall, Uri, 'post', Headers, wh_json:encode(Params), Debug).
 
 -spec send(whapps_call:call(), ne_binary(), http_method(), wh_proplist(), iolist(), boolean()) ->
                   {'ok', ibrowse_req_id(), whapps_call:call()} |

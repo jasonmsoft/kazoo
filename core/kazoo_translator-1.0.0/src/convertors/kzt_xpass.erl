@@ -177,7 +177,7 @@ req_params(Call) ->
                     {<<"channel">>, <<"VOICE">>},
                     {<<"network">>, <<"VOIP">>}
                     ]}}
-        ,{<<"from">>, {[{<<"id">>, <<(whapps_call:from_user(Call))/binary, "@", (whapps_call:from_realm(Call))>>},
+        ,{<<"from">>, {[{<<"id">>, <<(whapps_call:from_user(Call))/binary, "@", (whapps_call:from_realm(Call))/binary>>},
                         {<<"name">>, whapps_call:from_user(Call)},
                         {<<"channel">>, <<"VOICE">>},
                         {<<"network">>, <<"VOIP">>}
