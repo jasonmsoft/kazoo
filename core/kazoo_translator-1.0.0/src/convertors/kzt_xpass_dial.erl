@@ -216,9 +216,9 @@ is_numeric_or_plus(_) -> 'false'.
 %% capture the failed B-leg and continue processing the TwiML (if any).
 force_outbound(Props) -> props:get_is_true('continueOnFail', Props, 'true').
 
--spec xpass_elements_to_endpoints(whapps_call:call(), props()) ->
+-spec xpass_elements_to_endpoints(whapps_call:call(), wh_proplist()) ->
                                        wh_json:objects().
--spec xpass_elements_to_endpoints(whapps_call:call(), props(), wh_json:objects()) ->
+-spec xpass_elements_to_endpoints(whapps_call:call(), wh_proplist, wh_json:objects()) ->
                                        wh_json:objects().
 xpass_elements_to_endpoints(Call, Props) when not is_list(Props)->
     xpass_elements_to_endpoints(Call, [Props], []);
@@ -238,64 +238,65 @@ xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
         'throw':_E ->
             lager:debug("failed to parse SIP uri: ~p", [_E]),
             xpass_elements_to_endpoints(Call, EPs, Acc)
-    end;
-xml_elements_to_endpoints(Call, [#xmlElement{name='User'
-                                            ,content=UserIdTxt
-                                            ,attributes=_UserAttrs
-                                            }
-                                | EPs], Acc) ->
-    UserId = kz_xml:texts_to_binary(UserIdTxt),
-    lager:debug("maybe adding user ~s to ring group", [UserId]),
+    end.
 
-    case cf_user:get_endpoints(UserId, wh_json:new(), Call) of
-        [] ->
-            lager:debug("no user endpoints built for ~s, skipping", [UserId]),
-            xml_elements_to_endpoints(Call, EPs, Acc);
-        UserEPs -> xml_elements_to_endpoints(Call, EPs, UserEPs ++ Acc)
-    end;
-xml_elements_to_endpoints(Call, [#xmlElement{name='Number'
-                                             ,content=Number
-                                             ,attributes=Attrs
-                                            }
-                                 | EPs], Acc) ->
-    Props = kz_xml:attributes_to_proplist(Attrs),
-
-    SendDigits = props:get_value('sendDigis', Props),
-    _Url = props:get_value('url', Props),
-    _Method = props:get_value('method', Props),
-
-    DialMe = wnm_util:to_e164(kz_xml:texts_to_binary(Number)),
-
-    lager:debug("maybe add number ~s: send ~s", [DialMe, SendDigits]),
-
-    CallFwd = wh_json:from_list([{<<"number">>, DialMe}
-                                 ,{<<"require_keypress">>, 'false'}
-                                 ,{<<"substribute">>, 'true'}
-                                ]),
-    Endpoint = wh_json:from_list([{<<"call_forward">>, CallFwd}]),
-    EP = cf_endpoint:create_call_fwd_endpoint(Endpoint, wh_json:new(), Call),
-
-    xml_elements_to_endpoints(Call, EPs, [EP|Acc]);
-
-xml_elements_to_endpoints(Call, [#xmlElement{name='Sip'
-                                             ,content=Number
-                                             ,attributes=Attrs
-                                            }
-                                 | EPs], Acc) ->
-    _Props = kz_xml:attributes_to_proplist(Attrs),
-
-    try wnm_sip:parse(kz_xml:texts_to_binary(Number)) of
-        URI ->
-            xml_elements_to_endpoints(Call, EPs, [sip_uri(Call, URI)|Acc])
-    catch
-        'throw':_E ->
-            lager:debug("failed to parse SIP uri: ~p", [_E]),
-            xml_elements_to_endpoints(Call, EPs, Acc)
-    end;
-
-xml_elements_to_endpoints(Call, [_Xml|EPs], Acc) ->
-    lager:debug("unknown endpoint, skipping: ~p", [_Xml]),
-    xml_elements_to_endpoints(Call, EPs, Acc).
+%% xml_elements_to_endpoints(Call, [#xmlElement{name='User'
+%%                                             ,content=UserIdTxt
+%%                                             ,attributes=_UserAttrs
+%%                                             }
+%%                                 | EPs], Acc) ->
+%%     UserId = kz_xml:texts_to_binary(UserIdTxt),
+%%     lager:debug("maybe adding user ~s to ring group", [UserId]),
+%%
+%%     case cf_user:get_endpoints(UserId, wh_json:new(), Call) of
+%%         [] ->
+%%             lager:debug("no user endpoints built for ~s, skipping", [UserId]),
+%%             xml_elements_to_endpoints(Call, EPs, Acc);
+%%         UserEPs -> xml_elements_to_endpoints(Call, EPs, UserEPs ++ Acc)
+%%     end;
+%% xml_elements_to_endpoints(Call, [#xmlElement{name='Number'
+%%                                              ,content=Number
+%%                                              ,attributes=Attrs
+%%                                             }
+%%                                  | EPs], Acc) ->
+%%     Props = kz_xml:attributes_to_proplist(Attrs),
+%%
+%%     SendDigits = props:get_value('sendDigis', Props),
+%%     _Url = props:get_value('url', Props),
+%%     _Method = props:get_value('method', Props),
+%%
+%%     DialMe = wnm_util:to_e164(kz_xml:texts_to_binary(Number)),
+%%
+%%     lager:debug("maybe add number ~s: send ~s", [DialMe, SendDigits]),
+%%
+%%     CallFwd = wh_json:from_list([{<<"number">>, DialMe}
+%%                                  ,{<<"require_keypress">>, 'false'}
+%%                                  ,{<<"substribute">>, 'true'}
+%%                                 ]),
+%%     Endpoint = wh_json:from_list([{<<"call_forward">>, CallFwd}]),
+%%     EP = cf_endpoint:create_call_fwd_endpoint(Endpoint, wh_json:new(), Call),
+%%
+%%     xml_elements_to_endpoints(Call, EPs, [EP|Acc]);
+%%
+%% xml_elements_to_endpoints(Call, [#xmlElement{name='Sip'
+%%                                              ,content=Number
+%%                                              ,attributes=Attrs
+%%                                             }
+%%                                  | EPs], Acc) ->
+%%     _Props = kz_xml:attributes_to_proplist(Attrs),
+%%
+%%     try wnm_sip:parse(kz_xml:texts_to_binary(Number)) of
+%%         URI ->
+%%             xml_elements_to_endpoints(Call, EPs, [sip_uri(Call, URI)|Acc])
+%%     catch
+%%         'throw':_E ->
+%%             lager:debug("failed to parse SIP uri: ~p", [_E]),
+%%             xml_elements_to_endpoints(Call, EPs, Acc)
+%%     end;
+%%
+%% xml_elements_to_endpoints(Call, [_Xml|EPs], Acc) ->
+%%     lager:debug("unknown endpoint, skipping: ~p", [_Xml]),
+%%     xml_elements_to_endpoints(Call, EPs, Acc).
 
 -spec sip_uri(whapps_call:call(), ne_binary()) -> wh_json:object().
 sip_uri(Call, URI) ->

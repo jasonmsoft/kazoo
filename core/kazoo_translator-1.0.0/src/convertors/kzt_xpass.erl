@@ -53,8 +53,6 @@ exec(Call, Resp) ->
                            {'request', whapps_call:call()} |
                            {'stop', whapps_call:call()}.
 exec_elements(Call, []) -> {'ok', Call};
-exec_elements(Call, [_El|Els]) ->
-    exec_elements(Call, Els);
 exec_elements(Call, [El|Els]) ->
     try exec_element(Call, El) of
         {'ok', Call1} -> exec_elements(Call1, Els);
@@ -94,7 +92,7 @@ exec_element(Call,?KZT_XPASS_CMD(<<"ask">>, Args)) ->
     gather(Call, SubActions, Args);
 
 
-exec_element(Call,?KZT_XPASS_CMD(<<"hangup">>, Args)) ->
+exec_element(Call,?KZT_XPASS_CMD(<<"hangup">>, _Args)) ->
     hangup(Call);
 
 
@@ -223,7 +221,7 @@ hangup(Call) ->
 
 
 exec_on(Call, Args) ->
-    Event = wh_json:get_value(<<"event">>, Args),
+    _Event = wh_json:get_value(<<"event">>, Args),
     Next = wh_json:get_value(<<"next">>, Args),
     Uri = case Next of
         <<"http://", _>> ->
