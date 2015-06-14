@@ -103,10 +103,3 @@ If you have a non-US deployment, please consider sharing your system configurati
 * make
 * nc
 
-## Learn More
-
-* Join us at [KazooCon!](http://kazoocon.com/) 
-* Visit http://2600hz.org
-* Read more at http://wiki.2600hz.org
-* Bugs and feature requests http://tickets.2600hz.org
-* Join us on IRC @ freenode.net in #2600hz
