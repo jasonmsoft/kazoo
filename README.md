@@ -22,25 +22,6 @@ network. In practical terms that means you can create your own phone service
 in the cloud. Or on a server in your mother's basement. Or in a distributed
 cluster of servers around the globe. It's up to you.
 
-### Who is 2600hz?
-
-We're a bunch of crazy engineers who dreamt of a world where business
-communications wasn't so complicated. So we abandoned the old infrastructure
-altogether and teamed up to build a new platform from the ground up that would
-take out all the complexity while giving the power of customization to you,
-the user.
-
-Led by the founders of successful commercial and open-source telephony and
-networking projects, our carrier-grade software helps people create solid
-voice, video and SMS solutions that work. We provide you with the open-source
-infrastructure to run your own hosted PBX service, conferencing platform or
-any API-powered VoIP service that scales as your company grows!
-
-We are an exciting team of experienced and knowledgeable thought leaders in
-the enterprise communications space. Our experience ranges from hosting and
-managing services to carrier-grade termination, software design and
-professional services. Let us know how we can help you and, in return, we will
-ensure 2600hz is always leading the way in cloud telecom.
 
 ## Who Can Contribute?
 
