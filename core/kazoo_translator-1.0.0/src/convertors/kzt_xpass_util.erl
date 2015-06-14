@@ -14,7 +14,8 @@
 		get_lang/1,
 		get_engine/1,
 		loop_count/1,
-		get_ask_subactions/1]).
+		get_ask_subactions/1,
+		action_url/1]).
 
 -spec get_default_voice() -> atom().
 get_default_voice() ->
@@ -22,7 +23,7 @@ get_default_voice() ->
 
 
 
--spec get_lang(wh_proplist()) -> ne_binary().
+-spec get_lang(list()) -> binary().
 get_lang(Props) ->
 	case props:get_binary_value('language', Props) of
 		'undefined' -> <<"zh-cn">>;
@@ -35,18 +36,22 @@ get_lang(Props) ->
 	end.
 
 
--spec get_engine(wh_proplist()) -> ne_binary().
+-spec get_engine(list()) -> binary().
 get_engine(Props) ->
 	case props:get_binary_value('engine', Props) of
 		'undefined' -> <<"flite">>;
 		Engine -> Engine
 	end.
 
--spec loop_count(wh_proplist()) -> integer().
+-spec loop_count(list()) -> integer().
 loop_count(Props) -> props:get_integer_value('loop', Props, 1).
 
 
 get_ask_subactions(Args)->
 	SayContents = wh_json:get_value(<<"say">>, Args),
-	[fun(El) -> wh_json:from_list([<<"say">>, [El]]) end || El <- SayContents],
+	[wh_json:from_list([<<"say">>, [El]]) || El <- SayContents],
 	SayContents.
+
+
+-spec action_url(list()) -> binary().
+action_url(Props) -> props:get_binary_value('on', Props).

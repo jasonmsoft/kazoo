@@ -25,8 +25,8 @@
 
 -define(STATUS_QUEUED, <<"queued">>).
 -define(STATUS_RINGING, <<"ringing">>).
--define(STATUS_ANSWERED, <<"in-progress">>).
--define(STATUS_COMPLETED, <<"completed">>).
+-define(STATUS_ANSWERED, <<"ANSWERED">>).
+-define(STATUS_COMPLETED, <<"HANGUP">>).
 -define(STATUS_BUSY, <<"busy">>).
 -define(STATUS_FAILED, <<"failed">>).
 -define(STATUS_NOANSWER, <<"no-answer">>).

@@ -53,8 +53,6 @@ exec(Call, Resp) ->
                            {'request', whapps_call:call()} |
                            {'stop', whapps_call:call()}.
 exec_elements(Call, []) -> {'ok', Call};
-exec_elements(Call, [_El|Els]) ->
-    exec_elements(Call, Els);
 exec_elements(Call, [El|Els]) ->
     try exec_element(Call, El) of
         {'ok', Call1} -> exec_elements(Call1, Els);
@@ -93,9 +91,13 @@ exec_element(Call,?KZT_XPASS_CMD(<<"ask">>, Args)) ->
     SubActions = kzt_xpass_util:get_ask_subactions(Args),
     gather(Call, SubActions, Args);
 
-exec_element(Call,?KZT_XPASS_CMD(<<"hangup">>, Args)) ->
+
+exec_element(Call,?KZT_XPASS_CMD(<<"hangup">>, _Args)) ->
     hangup(Call);
 
+
+exec_element(Call,?KZT_XPASS_CMD(<<"on">>, Args)) ->
+    exec_on(Call, Args);
 
 
 exec_element(Call, #xmlElement{name='Record'
@@ -175,7 +177,7 @@ req_params(Call) ->
                     {<<"channel">>, <<"VOICE">>},
                     {<<"network">>, <<"VOIP">>}
                     ]}}
-        ,{<<"from">>, {[{<<"id">>, <<(whapps_call:from_user(Call))/binary, "@", (whapps_call:from_realm(Call))>>},
+        ,{<<"from">>, {[{<<"id">>, <<(whapps_call:from_user(Call))/binary, "@", (whapps_call:from_realm(Call))/binary>>},
                         {<<"name">>, whapps_call:from_user(Call)},
                         {<<"channel">>, <<"VOICE">>},
                         {<<"network">>, <<"VOIP">>}
@@ -183,6 +185,7 @@ req_params(Call) ->
         ]}}
         ]).
 
+-spec result_param(whapps_call:call()) ->wh_proplist().
 result_param(Call) ->
     Digits = kzt_util:get_digits_collected(Call),
     props:filter_undefined(
@@ -194,7 +197,7 @@ result_param(Call) ->
                 {<<"state">>, kzt_util:get_call_status(Call)},
                 {<<"sessionDuration">>, kzt_util:get_dial_call_duration(Call)},
                 {<<"calledid">>, whapps_call:to(Call)},
-                {<<"actions">>, [wh_json:from_list([{<<"name">>, Digits}])]}
+                {<<"actions">>, [wh_json:from_list([{<<"name">>, kzt_util:get_ask_name(Call)}, {<<"value">>, Digits}])]}
             ])
             }
         ])
@@ -213,7 +216,21 @@ result_param(Call) ->
 hangup(Call) ->
     whapps_call_command:answer(Call),
     whapps_call_command:hangup(Call),
-    {'stop', kzt_util:update_call_status(?STATUS_COMPLETED, Call)}.
+    {'request', kzt_util:update_call_status(?STATUS_COMPLETED, Call)}.
+
+
+
+exec_on(Call, Args) ->
+    _Event = wh_json:get_value(<<"event">>, Args),
+    Next = wh_json:get_value(<<"next">>, Args),
+    Uri = case Next of
+        <<"http://", _>> ->
+           Next;
+        _Other ->
+           kzt_util:resolve_uri(kzt_util:get_voice_uri(Call), Next)
+    end,
+    {ok, kzt_util:set_voice_uri(Uri, Call)}.
+
 
 -spec reject(whapps_call:call(), xml_attribs()) ->
                     {'stop', whapps_call:call()}.
@@ -377,9 +394,11 @@ gather_finished(Call, Props) ->
             CurrentUri = kzt_util:get_voice_uri(Call),
             NewUri = kzt_util:resolve_uri(CurrentUri, kzt_twiml_util:action_url(Props)),
             Method = kzt_util:http_method(Props),
+            Askname = wh_json:get_value(<<"name">>, Props),
 
             Setters = [{fun kzt_util:set_voice_uri_method/2, Method}
                        ,{fun kzt_util:set_voice_uri/2, NewUri}
+                       ,{fun kzt_util:set_ask_name/2, Askname}
                       ],
             {'request', whapps_call:exec(Setters, Call)}
     end.

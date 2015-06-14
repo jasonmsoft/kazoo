@@ -52,7 +52,9 @@
          ,set_advertise/2, get_advertise/1
          ,set_chat_permissions/2, get_chat_permissions/1
          ,get_session_id/0
-	 ,get_current_timestamp/0
+	     ,get_current_timestamp/0
+	     ,set_ask_name/2
+	     ,get_ask_name/1
         ]).
 
 -include("kzt.hrl").
@@ -166,6 +168,12 @@ get_call_time_limit(Call) -> whapps_call:kvs_fetch(<<"call_time_limit">>, Call).
 -spec get_voice_uri(whapps_call:call()) -> api_binary().
 set_voice_uri(Uri, Call) -> whapps_call:kvs_store(<<"voice_uri">>, Uri, Call).
 get_voice_uri(Call) -> whapps_call:kvs_fetch(<<"voice_uri">>, Call).
+
+-spec set_ask_name(binary(), whapps_call:call()) ->whapps_call:call() .
+set_ask_name(Name, Call) -> whapps_call:kvs_store(<<"ask_name">>, Name, Call).
+-spec get_ask_name(whapps_call:call()) -> binary().
+get_ask_name(Call) ->whapps_call:kvs_fetch(<<"ask_name">>, Call).
+
 
 -spec set_voice_uri_method('get' | 'post', whapps_call:call()) -> whapps_call:call().
 -spec get_voice_uri_method(whapps_call:call()) -> 'get' | 'post'.

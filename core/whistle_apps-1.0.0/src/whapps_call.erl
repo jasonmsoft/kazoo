@@ -613,11 +613,11 @@ set_request(Request, #whapps_call{}=Call) when is_binary(Request) ->
                      ,request_realm=RequestRealm
                     }.
 
--spec set_request(ne_binary(), call()) -> call().
+-spec set_session_id(ne_binary(), call()) -> call().
 set_session_id(SessionId, Call) ->
     kvs_store(<<"session_id">>, SessionId, Call).
 
--spec get_session_id(Call) ->binary().
+-spec get_session_id(call()) ->binary().
 get_session_id(Call) ->
     kvs_fetch(<<"session_id">>, Call).
 
