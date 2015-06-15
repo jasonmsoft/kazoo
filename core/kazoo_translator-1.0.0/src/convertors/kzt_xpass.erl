@@ -20,8 +20,11 @@
 -spec parse_cmds(iolist()) -> {'ok', xml_els()} |
                               {'error', 'not_parsed'}.
 parse_cmds(XpassString) ->
+    lager:debug("parse cmd: ~p", [XpassString]),
     try wh_json:decode(XpassString)of
-        JObj -> {'ok', JObj}
+        JObj ->
+        lager:debug("decoded command is : ~p", [JObj]),
+        {'ok', JObj}
     catch
         _:_ -> {'error', 'not_parsed'}
     end.

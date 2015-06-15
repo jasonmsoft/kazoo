@@ -43,7 +43,7 @@
 
 
 -define(KZT_XPASS_FLAG, <<"xpass">>).
--define(KZT_XPASS_CMDS(Cmds), {[?KZT_XPASS_FLAG, Cmds]}).
--define(KZT_XPASS_CMD(Cmd, Args), {[Cmd, Args]}).
+-define(KZT_XPASS_CMDS(Cmds), {[{?KZT_XPASS_FLAG, Cmds}]}).
+-define(KZT_XPASS_CMD(Cmd, Args), {[{Cmd, Args}]}).
 
 -endif.

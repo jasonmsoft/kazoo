@@ -9,13 +9,18 @@
 -module(kzt_xpass_say).
 -author("cdmaji1").
 
+-include_lib("whistle/include/wh_types.hrl").
+-include_lib("whistle/include/wh_log.hrl").
+
+
 %% API
 -export([exec/3]).
 
 
 exec(Call, <<"say">>, Args) ->
+	lager:debug("execute say, arg: ~p", [Args]),
 	whapps_call_command:answer(Call),
-	SayMe = Args,
+	SayMe = wh_json:get_value(<<"value">>, Args),
 	Voice = kzt_xpass_util:get_default_voice(),
 	Lang = kzt_xpass_util:get_lang([]),
 	Engine = kzt_xpass_util:get_engine([]),
