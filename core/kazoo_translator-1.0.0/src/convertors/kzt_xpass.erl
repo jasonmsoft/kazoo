@@ -120,16 +120,7 @@ exec_element(Call, #xmlElement{name='Gather'
                                ,attributes=Attrs
                               }) ->
     gather(Call, SubActions, Attrs);
-exec_element(Call, #xmlElement{name='Play'
-                               ,content=ToPlay
-                               ,attributes=Attrs
-                              }) ->
-    case play(Call, ToPlay, Attrs) of
-        {'ok', _}=OK -> OK;
-        {'error', _E, Call1} ->
-            lager:debug("play stopped with error ~p", [_E]),
-            {'error', Call1}
-    end;
+
 exec_element(Call, #xmlElement{name='Say'
                                ,content=ToSay
                                ,attributes=Attrs
@@ -281,7 +272,7 @@ set_variables(Call, Els) when is_list(Els) ->
                    (_, C) -> C
                 end, Call, Els).
 
--spec play(whapps_call:call(), xml_els() | xml_texts(), xml_attribs()) ->
+-spec play(whapps_call:call(), wh_json:object()) ->
                   {'ok', whapps_call:call()} |
                   {'error', _, whapps_call:call()}.
 play(Call, Args) ->
