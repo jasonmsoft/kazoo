@@ -412,8 +412,9 @@ handle_event(_JObj, #state{response_pid=Pid
 %% @end
 %%--------------------------------------------------------------------
 -spec terminate(term(), state()) -> 'ok'.
-terminate(_Reason, #state{response_pid=Pid}) ->
+terminate(_Reason, #state{response_pid=Pid, call = Call}) ->
     exit(Pid, 'kill'),
+    whapps_call_command:hangup(Call),
     lager:info("pivot call terminating: ~p", [_Reason]).
 
 %%--------------------------------------------------------------------
