@@ -191,21 +191,18 @@ req_params(Call) ->
 -spec result_param(whapps_call:call()) ->wh_proplist().
 result_param(Call) ->
     Digits = kzt_util:get_digits_collected(Call),
-    props:filter_undefined(
-    [
-        wh_json:from_list([
-            {<<"result">>, wh_json:from_list([
-                {<<"sessionId">>, whapps_call:get_session_id(Call)},
-                {<<"callId">>, whapps_call:call_id(Call)},
-                {<<"state">>, kzt_util:get_call_status(Call)},
-                {<<"sessionDuration">>, kzt_util:get_dial_call_duration(Call)},
-                {<<"calledid">>, whapps_call:to(Call)},
-                {<<"actions">>, [wh_json:from_list([{<<"name">>, kzt_util:get_ask_name(Call)}, {<<"value">>, Digits}])]}
-            ])
-            }
+    wh_json:from_list([
+        {<<"result">>, wh_json:from_list([
+            {<<"sessionId">>, whapps_call:get_session_id(Call)},
+            {<<"callId">>, whapps_call:call_id(Call)},
+            {<<"state">>, kzt_util:get_call_status(Call)},
+            {<<"sessionDuration">>, kzt_util:get_dial_call_duration(Call)},
+            {<<"calledid">>, whapps_call:to(Call)},
+            {<<"actions">>, [wh_json:from_list([{<<"name">>, kzt_util:get_ask_name(Call)}, {<<"value">>, Digits}])]}
         ])
-    ]
-    ).
+        }
+    ])
+    .
 
 
 

@@ -203,8 +203,8 @@ handle_cast({'request', Uri, Method, Params}, #state{call=Call
                                                      ,requester_queue=Q
                                                     }=State) ->
     Call1 = kzt_util:set_voice_uri(Uri, Call),
-
-    case send_req(Call1, Uri, Method, Params, Debug) of
+    lager:debug("ready to send http request: Uri:~p Method: ~p Params: ~p", [Uri, Method, Params]),
+    case send_req(Call1, Uri, 'post', Params, Debug) of
         {'ok', ReqId, Call2} ->
             lager:debug("sent request ~p to '~s' via '~s'", [ReqId, Uri, Method]),
             {'noreply', State#state{request_id=ReqId
@@ -483,8 +483,20 @@ handle_resp(Call, CT, RespBody) ->
     Srv = kzt_util:get_amqp_listener(Call),
 
     case process_resp(Call, CT, RespBody) of
-        {'stop', Call1} -> ?MODULE:stop_call(Srv, Call1);
-        {'ok', Call1} -> ?MODULE:stop_call(Srv, Call1);
+        {'stop', Call1} ->
+            ?MODULE:new_request(Srv
+                ,kzt_util:get_voice_uri(Call1)
+                ,kzt_util:get_voice_uri_method(Call1)
+                ,kzt_xpass:result_param(Call1)
+            ),
+            ?MODULE:stop_call(Srv, Call1);
+        {'ok', Call1} ->
+            ?MODULE:new_request(Srv
+                ,kzt_util:get_voice_uri(Call1)
+                ,kzt_util:get_voice_uri_method(Call1)
+                ,kzt_xpass:result_param(Call1)
+            ),
+            ?MODULE:stop_call(Srv, Call1);
         {'usurp', _Call1} -> ?MODULE:usurp_executor(Srv);
         {'request', Call1} ->
             ?MODULE:updated_call(Srv, Call1),
