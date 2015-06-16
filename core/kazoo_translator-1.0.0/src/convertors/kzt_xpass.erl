@@ -103,6 +103,9 @@ exec_element(Call,?KZT_XPASS_CMD(<<"on">>, Args)) ->
     exec_on(Call, Args);
 
 
+exec_element(Call,?KZT_XPASS_CMD(<<"play">>, Args)) ->
+    play(Call, Args);
+
 exec_element(Call, #xmlElement{name='Record'
                                ,content=[] % nothing inside the tags please
                                ,attributes=Attrs
@@ -277,17 +280,16 @@ set_variables(Call, Els) when is_list(Els) ->
 -spec play(whapps_call:call(), xml_els() | xml_texts(), xml_attribs()) ->
                   {'ok', whapps_call:call()} |
                   {'error', _, whapps_call:call()}.
-play(Call, XmlText, Attrs) ->
+play(Call, Args) ->
     whapps_call_command:answer(Call),
-    PlayMe = kz_xml:texts_to_binary(XmlText),
+    PlayMe = wh_json:get_value(<<"value">>, Args),
+    PlayMe2 = <<"/tmp/", PlayMe/binary>>,
     lager:info("PLAY '~s'", [PlayMe]),
+    Terminators = wapi_dialplan:terminators('undefined'),
 
-    Props = kz_xml:attributes_to_proplist(Attrs),
-    Terminators = kzt_twiml_util:get_terminators(Props),
-
-    case kzt_twiml_util:loop_count(Props) of
-        0 -> kzt_receiver:play_loop(Call, PlayMe, Terminators, 'infinity');
-        N when N > 0 -> kzt_receiver:play_loop(Call, PlayMe, Terminators, N)
+    case kzt_twiml_util:loop_count([]) of
+        0 -> kzt_receiver:play_loop(Call, PlayMe2, Terminators, 'infinity');
+        N when N > 0 -> kzt_receiver:play_loop(Call, PlayMe2, Terminators, N)
     end.
 
 -spec redirect(whapps_call:call(), xml_els() | xml_texts(), xml_attribs()) ->
