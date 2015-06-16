@@ -118,10 +118,11 @@ exec(Call, [#xmlElement{name='Queue'
 exec(Call, <<"transfer">>, Args) ->
     lager:debug("dialing endpoints, arg:~p", [Args]),
 
-    {Props} = Args,
+    Props = wh_json:to_proplist(Args),
+    lager:debug("after to proplist: ~p", [Props]),
     Call1 = setup_call_for_dial(Call, Props),
 
-    case xpass_elements_to_endpoints(Call1, Props) of
+    case xpass_elements_to_endpoints(Call1, [Props]) of
         [] ->
             lager:info("no endpoints were found to dial"),
             {'stop', Call1};
@@ -229,6 +230,8 @@ xpass_elements_to_endpoints(Call, Props) when is_list(Props)->
 
 xpass_elements_to_endpoints(_, [], Acc) -> Acc;
 xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
+
+    lager:debug("endpoint: ~p", [Ep]),
     Target = proplists:get_value(<<"to">>, Ep),
     lager:debug("maybe adding sip device ~s ", [Target]),
     try wnm_sip:parse(Target) of
