@@ -106,6 +106,10 @@ exec_element(Call,?KZT_XPASS_CMD(<<"on">>, Args)) ->
 exec_element(Call,?KZT_XPASS_CMD(<<"play">>, Args)) ->
     play(Call, Args);
 
+exec_element(Call,?KZT_XPASS_CMD(<<"gather">>, Args)) ->
+    gather(Call, [], Args);
+
+
 exec_element(Call, #xmlElement{name='Record'
                                ,content=[] % nothing inside the tags please
                                ,attributes=Attrs
