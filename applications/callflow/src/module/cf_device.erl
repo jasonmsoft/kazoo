@@ -22,6 +22,7 @@
 %%--------------------------------------------------------------------
 -spec handle(wh_json:object(), whapps_call:call()) -> 'ok'.
 handle(Data, Call) ->
+    lager:debug("bridge to device ... Data : ~p ", [Data]),
     case bridge_to_endpoints(Data, Call) of
         {'ok', _} ->
             lager:info("completed successful bridge to the device"),

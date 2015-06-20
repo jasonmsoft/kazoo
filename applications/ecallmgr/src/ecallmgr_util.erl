@@ -758,6 +758,7 @@ get_sip_contact(#bridge_endpoint{ip_address='undefined'
                                  ,username=Username
                                 }) ->
     {'ok', Contact} = ecallmgr_registrar:lookup_contact(Realm, Username),
+    lager:info("get sip contact: ~p", [Contact]),
     binary:replace(Contact, <<">">>, <<>>);
 get_sip_contact(#bridge_endpoint{ip_address=IPAddress}) -> IPAddress.
 

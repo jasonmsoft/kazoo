@@ -117,28 +117,36 @@ exec(Call, [#xmlElement{name='Queue'
 
 exec(Call, <<"transfer">>, Args) ->
     lager:debug("dialing endpoints, arg:~p", [Args]),
-
+    _To = wh_json:get_value(<<"to">>, Args),
+    Username = wnm_sip:user(wnm_sip:parse(_To)),
+%%     {ok, Users} = xpass_get_register_user(Call, Username),
+%%     lager:debug("get users: ~p", [Users]),
     Props = wh_json:to_proplist(Args),
     lager:debug("after to proplist: ~p", [Props]),
     Call1 = setup_call_for_dial(Call, Props),
-
     case xpass_elements_to_endpoints(Call1, [Props]) of
         [] ->
             lager:info("no endpoints were found to dial"),
             {'stop', Call1};
         EPs ->
-            lager:debug("endpoints created, sending dial"),
+            lager:debug("endpoints created: ~p, sending dial", [EPs]),
             Timeout = dial_timeout(Props),
             IgnoreEarlyMedia = cf_util:ignore_early_media(EPs),
             Strategy = dial_strategy(Props),
 
-            send_bridge_command(EPs, Timeout, Strategy, IgnoreEarlyMedia, Call1),
-
-            {'ok', Call2} = kzt_receiver:wait_for_offnet(
-                              kzt_util:update_call_status(?STATUS_RINGING, Call1)
-                              ,Props
-                             ),
-            maybe_end_dial(Call2, Props)
+            case xpass_get_register_user(Call1, Username) of
+                {ok, JObj} ->
+                    lager:debug("get register users, ~p", [JObj]),
+                    send_bridge_command(EPs, Timeout, Strategy, IgnoreEarlyMedia, Call1),
+                    {'ok', Call2} = kzt_receiver:wait_for_offnet(
+                        kzt_util:update_call_status(?STATUS_RINGING, Call1)
+                        ,Props
+                    ),
+                    maybe_end_dial(Call2, Props);
+                _Any ->
+                    lager:error("get user failed, ~p", [_Any]),
+                    {'stop', Call1}
+            end
     end.
 
 dial_me(Call, Attrs, DialMe) ->
@@ -233,15 +241,38 @@ xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
 
     lager:debug("endpoint: ~p", [Ep]),
     Target = proplists:get_value(<<"to">>, Ep),
-    lager:debug("maybe adding sip device ~s ", [Target]),
-    try wnm_sip:parse(Target) of
-        URI ->
-            xpass_elements_to_endpoints(Call, EPs, [sip_uri(Call, URI)|Acc])
+    Username = wnm_sip:user(wnm_sip:parse(Target)),
+    JObjEp = wh_json:from_list(Ep),
+    JObjEp2 = wh_json:set_value(<<"username">>, Username, JObjEp),
+    lager:debug("maybe adding sip device ~s ", [JObjEp2]),
+    try sip_uri(Call, JObjEp2) of
+        [] ->
+            lager:debug("no user endpoints built for ~s, skipping", [Target]),
+            xpass_elements_to_endpoints(Call, EPs, Acc);
+        UserEPs -> xpass_elements_to_endpoints(Call, EPs, [UserEPs] ++ Acc)
     catch
-        'throw':_E ->
-            lager:debug("failed to parse SIP uri: ~p", [_E]),
-            xpass_elements_to_endpoints(Call, EPs, Acc)
+        _E:_R ->
+            lager:error("parse uri failed, ")
     end.
+
+
+xpass_get_register_user(Call, Username)->
+    Req = [{<<"Realm">>, whapps_call:from_realm(Call)}
+        ,{<<"Username">>, Username}
+        ,{<<"Fields">>, []}
+        | wh_api:default_headers(?APP_NAME, ?APP_VERSION)
+    ],
+    ReqResp = whapps_util:amqp_pool_request(Req
+        ,fun wapi_registration:publish_query_req/1
+        ,fun wapi_registration:query_resp_v/1
+    ),
+    case ReqResp of
+        {ok, JObj} ->
+            {ok, JObj};
+        _Any ->
+            {error, _Any}
+    end.
+
 
 %% xml_elements_to_endpoints(Call, [#xmlElement{name='User'
 %%                                             ,content=UserIdTxt
@@ -301,19 +332,20 @@ xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
 %%     lager:debug("unknown endpoint, skipping: ~p", [_Xml]),
 %%     xml_elements_to_endpoints(Call, EPs, Acc).
 
--spec sip_uri(whapps_call:call(), ne_binary()) -> wh_json:object().
-sip_uri(Call, URI) ->
-    lager:debug("maybe adding SIP endpoint: ~s", [wnm_sip:encode(URI)]),
-    SIPDevice = sip_device(URI),
+-spec sip_uri(whapps_call:call(), wh_proplist()) -> wh_json:object().
+sip_uri(Call, Ep) ->
+    lager:debug("+++maybe adding SIP endpoint: ~p", [Ep]),
+%%     SIPDevice = sip_device(URI),
+    SIPDevice = Ep,
     cf_endpoint:create_sip_endpoint(SIPDevice, wh_json:new(), Call).
 
--spec sip_device(ne_binary()) -> kz_device:doc().
-sip_device(URI) ->
-    lists:foldl(fun({F, V}, D) -> F(D, V) end
-                ,kz_device:new()
-                ,[{fun kz_device:set_sip_invite_format/2, <<"route">>}
-                  ,{fun kz_device:set_sip_route/2, wnm_sip:encode(URI)}
-                 ]).
+%% -spec sip_device(ne_binary()) -> kz_device:doc().
+%% sip_device(_URI) ->
+%%     lists:foldl(fun({F, V}, D) -> F(D, V) end
+%%                 ,kz_device:new()
+%%                 ,[{fun kz_device:set_sip_invite_format/2, <<"route">>}
+%% %%                    ,{fun kz_device:set_sip_route/2, URI}
+%%                  ]).
 
 request_id(N, Call) -> iolist_to_binary([N, <<"@">>, whapps_call:from_realm(Call)]).
 

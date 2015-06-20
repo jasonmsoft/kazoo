@@ -81,8 +81,11 @@ get(Call) -> get(whapps_call:authorizing_id(Call), Call).
 get('undefined', _Call) ->
     {'error', 'invalid_endpoint_id'};
 get(EndpointId, AccountDb) when is_binary(AccountDb) ->
+    lager:debug("get endpoint from cache ept: ~p acc: ~p", [EndpointId, AccountDb]),
     case wh_cache:peek_local(?CALLFLOW_CACHE, {?MODULE, AccountDb, EndpointId}) of
-        {'ok', Endpoint} -> {'ok', Endpoint};
+        {'ok', Endpoint} ->
+            lager:debug("get endpoint from cache, ~p", [EndpointId]),
+            {'ok', Endpoint};
         {'error', 'not_found'} ->
             maybe_fetch_endpoint(EndpointId, AccountDb)
     end;
@@ -109,11 +112,13 @@ maybe_have_endpoint(JObj, EndpointId, AccountDb) ->
         <<"device">> = EndpointType ->
             Endpoint = wh_json:set_value(<<"Endpoint-ID">>, EndpointId, merge_attributes(JObj, EndpointType)),
             CacheProps = [{'origin', cache_origin(JObj, EndpointId, AccountDb)}],
+            lager:debug("device get it . ~p", [EndpointId]),
             catch wh_cache:store_local(?CALLFLOW_CACHE, {?MODULE, AccountDb, EndpointId}, Endpoint, CacheProps),
             {'ok', Endpoint};
         <<"user">> = EndpointType ->
             Endpoint = wh_json:set_value(<<"Endpoint-ID">>, EndpointId, merge_attributes(JObj, EndpointType)),
             CacheProps = [{'origin', cache_origin(JObj, EndpointId, AccountDb)}],
+            lager:debug("user get it . ~p", [EndpointId]),
             catch wh_cache:store_local(?CALLFLOW_CACHE, {?MODULE, AccountDb, EndpointId}, Endpoint, CacheProps),
             {'ok', Endpoint};
         <<"account">> = EndpointType ->
@@ -909,9 +914,9 @@ create_sip_endpoint(Endpoint, Properties, Call) ->
 -spec create_sip_endpoint(wh_json:object(), wh_json:object(), clid(), whapps_call:call()) ->
                                  wh_json:object().
 create_sip_endpoint(Endpoint, Properties, #clid{}=Clid, Call) ->
-    SIPJObj = wh_json:get_value(<<"sip">>, Endpoint),
+    SIPJObj = Endpoint,%%wh_json:get_value(<<"sip">>, Endpoint),
     _ = maybe_record_call(Endpoint, Call),
-    wh_json:from_list(
+    SipEp = wh_json:from_list(
       props:filter_empty(
         [{<<"Invite-Format">>, get_invite_format(SIPJObj)}
          ,{<<"To-User">>, get_to_user(SIPJObj, Properties)}
@@ -945,7 +950,9 @@ create_sip_endpoint(Endpoint, Properties, #clid{}=Clid, Call) ->
          ,{<<"Failover">>, maybe_build_failover(Endpoint, Clid, Call)}
          ,{<<"Metaflows">>, wh_json:get_value(<<"metaflows">>, Endpoint)}
          | maybe_get_t38(Endpoint, Call)
-        ])).
+        ])),
+        lager:debug("++++create sip endpoint : ~p", [SipEp]),
+        SipEp.
 
 -spec maybe_get_t38(wh_json:object(), whapps_call:call()) -> wh_proplist().
 maybe_get_t38(Endpoint, Call) ->
@@ -1383,7 +1390,7 @@ maybe_set_call_waiting({Endpoint, Call, CallFwd, JObj}) ->
 
 -spec get_invite_format(wh_json:object()) -> ne_binary().
 get_invite_format(SIPJObj) ->
-    wh_json:get_value(<<"invite_format">>, SIPJObj, <<"username">>).
+    wh_json:get_value(<<"invite_format">>, SIPJObj, <<"username">>). %% username
 
 -spec get_to_did(wh_json:object(), whapps_call:call()) -> api_binary().
 get_to_did(Endpoint, Call) ->
@@ -1397,7 +1404,7 @@ get_to_user(SIPJObj, Properties) ->
     case wh_json:get_ne_value(<<"static_invite">>, Properties) of
         'undefined' ->
             case wh_json:get_ne_value(<<"static_invite">>, SIPJObj) of
-                'undefined' -> wh_json:get_value(<<"username">>, SIPJObj);
+                'undefined' -> wh_json:get_value(<<"to">>, SIPJObj);
                 To -> To
             end;
         To -> To
