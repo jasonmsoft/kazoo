@@ -1404,7 +1404,7 @@ get_to_user(SIPJObj, Properties) ->
     case wh_json:get_ne_value(<<"static_invite">>, Properties) of
         'undefined' ->
             case wh_json:get_ne_value(<<"static_invite">>, SIPJObj) of
-                'undefined' -> wh_json:get_value(<<"to">>, SIPJObj);
+                'undefined' -> wh_json:get_value(<<"username">>, SIPJObj);
                 To -> To
             end;
         To -> To
