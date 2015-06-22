@@ -185,7 +185,7 @@ get_voice_uri_method(Call) -> whapps_call:kvs_fetch(<<"voice_uri_method">>, Call
 -spec clear_digits_collected(whapps_call:call()) -> whapps_call:call().
 -spec add_digit_collected(ne_binary(), whapps_call:call()) -> whapps_call:call().
 set_digits_collected(Ds, Call) -> whapps_call:kvs_store(<<"digits_collected">>, Ds, Call).
-get_digits_collected(Call) -> whapps_call:kvs_fetch(<<"digits_collected">>, Call).
+get_digits_collected(Call) -> whapps_call:kvs_fetch(<<"digits_collected">>, <<>>, Call).
 clear_digits_collected(Call) -> whapps_call:kvs_store(<<"digits_collected">>, <<>>, Call).
 add_digit_collected(D, Call) ->
     whapps_call:kvs_update(<<"digits_collected">>, fun(<<_/binary>> = Ds) -> <<Ds/binary, D/binary>>;

@@ -112,7 +112,7 @@ handle_dtmf(Call, FinishKey, Timeout, N, OnFirstFun, <<>>, DTMF) ->
                   ,FinishKey, Timeout, N, fun default_on_first_fun/1, DTMF
                  );
 handle_dtmf(Call, FinishKey, Timeout, N, OnFirstFun, Collected, DTMF) ->
-    lager:debug("dtmf pressed: '~s'", [DTMF]),
+    lager:debug("dtmf pressed: ~p Collected: ~p", [DTMF, Collected]),
     collect_dtmfs(kzt_util:add_digit_collected(DTMF, Call)
                   ,FinishKey, Timeout, N, OnFirstFun, <<DTMF/binary, Collected/binary>>
                  ).
