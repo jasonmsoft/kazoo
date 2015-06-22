@@ -446,7 +446,7 @@ send_req(Call, Uri, 'post', BaseParams, Debug) ->
     UserParams = kzt_translator:get_user_vars(Call),
     Params = wh_json:set_values(BaseParams, UserParams),
     UpdatedCall = whapps_call:kvs_erase(<<"digits_collected">>, Call),
-    Headers = [{"Content-Type", "text/json"}],
+    Headers = [{"Content-Type", "application/json"}],
     send(UpdatedCall, Uri, 'post', Headers, wh_json:encode(Params), Debug).
 
 -spec send(whapps_call:call(), ne_binary(), http_method(), wh_proplist(), iolist(), boolean()) ->

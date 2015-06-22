@@ -20,7 +20,8 @@
 exec(Call, <<"say">>, Args) ->
 	lager:debug("execute say, arg: ~p", [Args]),
 	whapps_call_command:answer(Call),
-	SayMe = wh_json:get_value(<<"value">>, Args),
+	[JObj] = Args,
+	SayMe = wh_json:get_value(<<"value">>, JObj),
 	Voice = kzt_xpass_util:get_default_voice(),
 	Lang = kzt_xpass_util:get_lang([]),
 	Engine = kzt_xpass_util:get_engine([]),
