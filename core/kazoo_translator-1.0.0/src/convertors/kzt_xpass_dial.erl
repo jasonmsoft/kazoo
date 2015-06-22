@@ -186,7 +186,7 @@ setup_call_for_dial(Call, Props) ->
 -spec maybe_end_dial(whapps_call:call(), wh_proplist()) ->
                             {'ok' | 'stop' | 'request', whapps_call:call()}.
 maybe_end_dial(Call, Props) ->
-    maybe_end_dial(Call, Props, kzt_xpass_util:action_url(Props)).
+    maybe_end_dial(Call, Props, kzt_xpass_util:action_url(Call)).
 
 maybe_end_dial(Call, _Props, 'undefined') ->
     lager:debug("a-leg status after bridge: ~s", [kzt_util:get_call_status(Call)]),
@@ -236,7 +236,7 @@ xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
     Username = wnm_sip:user(wnm_sip:parse(Target)),
     JObjEp = wh_json:from_list(Ep),
     JObjEp2 = wh_json:set_value(<<"username">>, Username, JObjEp),
-    lager:debug("maybe adding sip device ~s ", [JObjEp2]),
+    lager:debug("maybe adding sip device ~p ", [JObjEp2]),
     try sip_uri(Call, JObjEp2) of
         [] ->
             lager:debug("no user endpoints built for ~s, skipping", [Target]),
