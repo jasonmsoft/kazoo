@@ -353,8 +353,6 @@ gather(Call, Attrs) ->
     NumDigitsObj = wh_json:get_value(<<"choices">>, JObj),
     lager:debug("numb digits obj: ~p JObj: ~p", [NumDigitsObj, JObj]),
     NumDigits = wh_json:get_value(<<"value">>, NumDigitsObj),
-
-
     gather(Call, FinishKey, Timeout, JObj, NumDigits).
 
 -spec gather(whapps_call:call(), api_binary(), wh_timeout(), wh_proplist(), pos_integer()) ->
@@ -398,6 +396,7 @@ gather_finished(Call, Props) ->
             Setters = [{fun kzt_util:set_voice_uri_method/2, Method}
                        ,{fun kzt_util:set_voice_uri/2, CurrentUri}
                        ,{fun kzt_util:set_ask_name/2, Askname}
+                       ,{fun kzt_util:set_digits_collected/2, _DTMFs}
                       ],
             {'request', whapps_call:exec(Setters, Call)}
     end.

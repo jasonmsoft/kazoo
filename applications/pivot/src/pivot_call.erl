@@ -216,6 +216,7 @@ handle_cast({'request', Uri, Method, Params}, #state{call=Call
                                     ,call=Call2
                                    }};
         _ ->
+            lager:error("send request failed, stop call"),
             wapi_pivot:publish_failed(Q, [{<<"Call-ID">>,whapps_call:call_id(Call)}
                                           | wh_api:default_headers(?APP_NAME, ?APP_VERSION)
                                          ]),
