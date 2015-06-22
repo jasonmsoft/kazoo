@@ -49,9 +49,9 @@ loop_count(Props) -> props:get_integer_value('loop', Props, 1).
 
 get_ask_subactions(Args)->
 	SayContents = wh_json:get_value(<<"say">>, Args),
-	[wh_json:from_list([<<"say">>, [El]]) || El <- SayContents],
-	SayContents.
+	SubActions = [wh_json:from_list([{<<"say">>, [El]}]) || El <- SayContents],
+	SubActions.
 
 
--spec action_url(list()) -> binary().
-action_url(Props) -> props:get_binary_value('on', Props).
+-spec action_url(whapps_call:call()) -> binary().
+action_url(Call) -> kzt_util:get_voice_uri(Call).

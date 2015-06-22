@@ -335,10 +335,11 @@ exec_gather_els(Call, SubActions) ->
                     kzt_receiver:collect_dtmfs_return().
 gather(Call, [], Attrs) -> gather(Call, Attrs);
 gather(Call, SubActions, Attrs) ->
-    lager:info("GATHER: exec sub actions"),
+    lager:info("GATHER: exec sub actions, ~p attr: ~p", [SubActions, Attrs]),
     {'ok', C} = exec_gather_els(kzt_util:clear_digits_collected(Call)
                                 ,SubActions
                                ),
+    lager:info("++gather attrs : ~p", [Attrs]),
     gather(C, Attrs).
 
 -spec gather(whapps_call:call(), wh_json:object()) ->
@@ -346,14 +347,15 @@ gather(Call, SubActions, Attrs) ->
 gather(Call, Attrs) ->
     whapps_call_command:answer(Call),
 
-    JObj = [Attrs],
+    JObj = Attrs,
     Timeout = wh_json:get_value(<<"timeout">>, JObj, 5) * 1000,
     FinishKey = <<"#">>,
-    NumDigitsObj = wh_json:get_value(<<"choice">>, JObj),
+    NumDigitsObj = wh_json:get_value(<<"choices">>, JObj),
+    lager:debug("numb digits obj: ~p JObj: ~p", [NumDigitsObj, JObj]),
     NumDigits = wh_json:get_value(<<"value">>, NumDigitsObj),
-    NumDigits2 = list_to_integer(binary_to_list(NumDigits)),
 
-    gather(Call, FinishKey, Timeout, JObj, NumDigits2).
+
+    gather(Call, FinishKey, Timeout, JObj, NumDigits).
 
 -spec gather(whapps_call:call(), api_binary(), wh_timeout(), wh_proplist(), pos_integer()) ->
                     {'ok', whapps_call:call()} |
@@ -387,14 +389,14 @@ gather_finished(Call, Props) ->
             lager:info("caller entered no digits, continuing"),
             {'ok', kzt_util:clear_digits_collected(Call)};
         _DTMFs ->
-            lager:info("caller entered DTMFs: ~s", [_DTMFs]),
+            lager:info("caller entered DTMFs: ~s , props: ~p", [_DTMFs, Props]),
             CurrentUri = kzt_util:get_voice_uri(Call),
-            NewUri = kzt_util:resolve_uri(CurrentUri, kzt_twiml_util:action_url(Props)),
-            Method = kzt_util:http_method(Props),
+%%             NewUri = kzt_util:resolve_uri(CurrentUri, kzt_xpass_util:action_url(Call)),
+            Method = 'post',
             Askname = wh_json:get_value(<<"name">>, Props),
 
             Setters = [{fun kzt_util:set_voice_uri_method/2, Method}
-                       ,{fun kzt_util:set_voice_uri/2, NewUri}
+                       ,{fun kzt_util:set_voice_uri/2, CurrentUri}
                        ,{fun kzt_util:set_ask_name/2, Askname}
                       ],
             {'request', whapps_call:exec(Setters, Call)}
