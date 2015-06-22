@@ -118,7 +118,7 @@ exec(Call, [#xmlElement{name='Queue'
 exec(Call, <<"transfer">>, Args) ->
     lager:debug("dialing endpoints, arg:~p", [Args]),
     _To = wh_json:get_value(<<"to">>, Args),
-    Username = wnm_sip:user(wnm_sip:parse(_To)),
+%%     Username = wnm_sip:user(wnm_sip:parse(_To)),
 %%     {ok, Users} = xpass_get_register_user(Call, Username),
 %%     lager:debug("get users: ~p", [Users]),
     Props = wh_json:to_proplist(Args),
@@ -133,20 +133,12 @@ exec(Call, <<"transfer">>, Args) ->
             Timeout = dial_timeout(Props),
             IgnoreEarlyMedia = cf_util:ignore_early_media(EPs),
             Strategy = dial_strategy(Props),
-
-            case xpass_get_register_user(Call1, Username) of
-                {ok, JObj} ->
-                    lager:debug("get register users, ~p", [JObj]),
-                    send_bridge_command(EPs, Timeout, Strategy, IgnoreEarlyMedia, Call1),
-                    {'ok', Call2} = kzt_receiver:wait_for_offnet(
-                        kzt_util:update_call_status(?STATUS_RINGING, Call1)
-                        ,Props
-                    ),
-                    maybe_end_dial(Call2, Props);
-                _Any ->
-                    lager:error("get user failed, ~p", [_Any]),
-                    {'stop', Call1}
-            end
+            send_bridge_command(EPs, Timeout, Strategy, IgnoreEarlyMedia, Call1),
+            {'ok', Call2} = kzt_receiver:wait_for_offnet(
+                kzt_util:update_call_status(?STATUS_RINGING, Call1)
+                ,Props
+            ),
+            maybe_end_dial(Call2, Props)
     end.
 
 dial_me(Call, Attrs, DialMe) ->
@@ -256,22 +248,22 @@ xpass_elements_to_endpoints(Call, [ Ep| EPs], Acc) ->
     end.
 
 
-xpass_get_register_user(Call, Username)->
-    Req = [{<<"Realm">>, whapps_call:from_realm(Call)}
-        ,{<<"Username">>, Username}
-        ,{<<"Fields">>, []}
-        | wh_api:default_headers(?APP_NAME, ?APP_VERSION)
-    ],
-    ReqResp = whapps_util:amqp_pool_request(Req
-        ,fun wapi_registration:publish_query_req/1
-        ,fun wapi_registration:query_resp_v/1
-    ),
-    case ReqResp of
-        {ok, JObj} ->
-            {ok, JObj};
-        _Any ->
-            {error, _Any}
-    end.
+%% xpass_get_register_user(Call, Username)->
+%%     Req = [{<<"Realm">>, whapps_call:from_realm(Call)}
+%%         ,{<<"Username">>, Username}
+%%         ,{<<"Fields">>, []}
+%%         | wh_api:default_headers(?APP_NAME, ?APP_VERSION)
+%%     ],
+%%     ReqResp = whapps_util:amqp_pool_request(Req
+%%         ,fun wapi_registration:publish_query_req/1
+%%         ,fun wapi_registration:query_resp_v/1
+%%     ),
+%%     case ReqResp of
+%%         {ok, JObj} ->
+%%             {ok, JObj};
+%%         _Any ->
+%%             {error, _Any}
+%%     end.
 
 
 %% xml_elements_to_endpoints(Call, [#xmlElement{name='User'
