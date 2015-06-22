@@ -311,8 +311,8 @@ get_chat_permissions(Call) -> whapps_call:kvs_fetch(<<"chat_permissions">>, Call
 get_request_vars(Call) ->
     wh_json:from_list(
       props:filter_empty(
-        [{<<"Digits">>, get_digits_collected(Call)}
-         ,{<<"RecordingUrl">>, get_recording_url(Call)}
+        [
+         {<<"RecordingUrl">>, get_recording_url(Call)}
          ,{<<"RecordingDuration">>, get_recording_duration(Call)}
          ,{<<"DialCallStatus">>, get_dial_call_status(Call)}
          ,{<<"DialCallSid">>, get_dial_call_sid(Call)}
