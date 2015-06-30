@@ -20,6 +20,7 @@
 
 -spec handle_req(wh_json:object(), wh_proplist()) -> 'ok'.
 handle_req(JObj, Props) ->
+    lager:debug("++++++call route request coming ........"),
     'true' = wapi_route:req_v(JObj),
     Call = maybe_device_redirected(whapps_call:from_route_req(JObj)),
     case is_binary(whapps_call:account_id(Call))

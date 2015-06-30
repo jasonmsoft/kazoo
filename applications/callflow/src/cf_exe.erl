@@ -353,6 +353,7 @@ handle_cast({'continue', Key}, #state{flow=Flow
             end
     end;
 handle_cast('stop', #state{flows=[]}=State) ->
+    lager:info("stop call, no flows"),
     {'stop', 'normal', State};
 handle_cast('stop', #state{flows=[Flow|Flows]}=State) ->
     {'noreply', launch_cf_module(State#state{flow=Flow, flows=Flows})};

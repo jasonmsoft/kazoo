@@ -214,7 +214,7 @@ result_param(Call) ->
 hangup(Call) ->
     whapps_call_command:answer(Call),
     whapps_call_command:hangup(Call),
-    {'request', kzt_util:update_call_status(?STATUS_COMPLETED, Call)}.
+    {'stop', kzt_util:update_call_status(?STATUS_COMPLETED, Call)}.
 
 
 

@@ -415,7 +415,13 @@ handle_event(_JObj, #state{response_pid=Pid
 -spec terminate(term(), state()) -> 'ok'.
 terminate(_Reason, #state{response_pid=Pid, call = Call}) ->
     exit(Pid, 'kill'),
-    whapps_call_command:hangup(Call),
+    CallStatus = kzt_util:get_call_status(Call),
+    case CallStatus of
+        <<"HANGUP">> ->
+            lager:info("call has been hangup , not need to hangup again");
+        _Any ->
+            whapps_call_command:hangup(Call)
+    end,
     lager:info("pivot call terminating: ~p", [_Reason]).
 
 %%--------------------------------------------------------------------
@@ -485,6 +491,8 @@ handle_resp(Call, CT, RespBody) ->
 
     case process_resp(Call, CT, RespBody) of
         {'stop', Call1} ->
+            ?MODULE:updated_call(Srv, Call1),
+            lager:debug("stop call +++++"),
             ?MODULE:new_request(Srv
                 ,kzt_util:get_voice_uri(Call1)
                 ,kzt_util:get_voice_uri_method(Call1)
@@ -492,6 +500,7 @@ handle_resp(Call, CT, RespBody) ->
             ),
             ?MODULE:stop_call(Srv, Call1);
         {'ok', Call1} ->
+            lager:debug("continue call +++++"),
             ?MODULE:new_request(Srv
                 ,kzt_util:get_voice_uri(Call1)
                 ,kzt_util:get_voice_uri_method(Call1)
@@ -500,6 +509,7 @@ handle_resp(Call, CT, RespBody) ->
             ?MODULE:stop_call(Srv, Call1);
         {'usurp', _Call1} -> ?MODULE:usurp_executor(Srv);
         {'request', Call1} ->
+            lager:debug("continue call, request +++++"),
             ?MODULE:updated_call(Srv, Call1),
             ?MODULE:new_request(Srv
                                 ,kzt_util:get_voice_uri(Call1)
